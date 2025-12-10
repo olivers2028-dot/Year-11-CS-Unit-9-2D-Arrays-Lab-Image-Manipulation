@@ -1,6 +1,10 @@
 package code;
 
+import image.APImage;
+import image.ImagePanel;
 import image.Pixel;
+
+import javax.swing.*;
 
 public class ImageManipulation {
 
@@ -8,6 +12,7 @@ public class ImageManipulation {
      *  Write a statement that will display the image in a window
      */
     public static void main(String[] args) {
+
 
 
     }
@@ -21,7 +26,17 @@ public class ImageManipulation {
      * Calculate the average of the red, green, and blue components of the pixel.
      * Set the red, green, and blue components to this average value. */
     public static void grayScale(String pathOfFile) {
-
+        APImage image = new APImage(pathOfFile);
+        for(int y = 0; y < image.getHeight(); y++){
+            for(int x = 0; x < image.getWidth(); x++){
+                Pixel pixel = image.getPixel(x, y);
+                int pixelAverage = getAverageColour(pixel);
+                pixel.setBlue(pixelAverage);
+                pixel.setGreen(pixelAverage);
+                pixel.setRed(pixelAverage);
+            }
+        }
+        image.draw();
     }
 
     /** A helper method that can be used to assist you in each challenge.
@@ -29,8 +44,10 @@ public class ImageManipulation {
      * @param pixel
      * @return the average RGB value
      */
+
     private static int getAverageColour(Pixel pixel) {
-        return 0;
+        int sum = (pixel.getBlue() + pixel.getGreen() + pixel.getRed());
+        return sum/3;
     }
 
     /** CHALLENGE TWO: Black and White
@@ -43,7 +60,24 @@ public class ImageManipulation {
      * If the average is less than 128, set the pixel to black
      * If the average is equal to or greater than 128, set the pixel to white */
     public static void blackAndWhite(String pathOfFile) {
+        APImage image = new APImage(pathOfFile);
+        for(int i = 0; i < image.getHeight(); i++){
+            for(int j = 0; j < image.getWidth(); j++){
+                Pixel pixel = image.getPixel(j, i);
 
+                int pixelAverage = getAverageColour(pixel);
+                if(pixelAverage < 128){
+                    pixel.setRed(0);
+                    pixel.setGreen(0);
+                    pixel.setBlue(0);
+                } else{
+                    pixel.setRed(255);
+                    pixel.setGreen(255);
+                    pixel.setBlue(255);
+                }
+            }
+        }
+        image.draw();
     }
 
     /** CHALLENGE Three: Edge Detection
@@ -69,7 +103,48 @@ public class ImageManipulation {
      * edge detection to an image using a threshold of 35
      *  */
     public static void edgeDetection(String pathToFile, int threshold) {
+        APImage image = new APImage(pathToFile);
+        APImage output = new APImage(pathToFile);
 
+        for (int i = 0; i < image.getHeight(); i++) {
+            for (int j = 0; j < image.getWidth(); j++) {
+
+                Pixel pixel = image.getPixel(j, i);
+
+                int avg = getAverageColour(pixel);
+                Pixel outPix = output.getPixel(j, i);
+
+                boolean leftEdge = false;
+                if (j > 0) {
+                    Pixel left = image.getPixel(j - 1, i);
+                    int leftAvg = getAverageColour(left);
+                    if (Math.abs(avg - leftAvg) > threshold) {
+                        leftEdge = true;
+                    }
+                }
+
+                boolean downEdge = false;
+                if (i < image.getHeight() - 1) {
+                    Pixel down = image.getPixel(j, i + 1);
+                    int downAvg = getAverageColour(down);
+                    if (Math.abs(avg - downAvg) > threshold) {
+                        downEdge = true;
+                    }
+                }
+                
+                if (leftEdge || downEdge) {
+                    outPix.setRed(0);
+                    outPix.setGreen(0);
+                    outPix.setBlue(0);
+                } else {
+                    outPix.setRed(255);
+                    outPix.setGreen(255);
+                    outPix.setBlue(255);
+                }
+            }
+        }
+
+        output.draw();
     }
 
     /** CHALLENGE Four: Reflect Image
@@ -79,7 +154,14 @@ public class ImageManipulation {
      *
      */
     public static void reflectImage(String pathToFile) {
-
+        APImage image = new APImage(pathToFile);
+        APImage output = new APImage(pathToFile);
+        for (int i = 0; i < image.getHeight() - 1; i++) {
+            for (int j = 1; j < image.getWidth() - 1; j++) {
+                output.setPixel(image.getWidth()-j, i, image.getPixel(j, i));
+            }
+        }
+        output.draw();
     }
 
     /** CHALLENGE Five: Rotate Image
@@ -89,7 +171,49 @@ public class ImageManipulation {
      *
      *  */
     public static void rotateImage(String pathToFile) {
+        APImage image = new APImage(pathToFile);
+        APImage output = new APImage(image.getHeight(), image.getWidth());
+        for (int i = 0; i < image.getHeight() - 1; i++) {
+            for (int j = 1; j < image.getWidth() - 1; j++) {
+                output.setPixel(i, j, image.getPixel(j, i));
+            }
+        }
+        output.draw();
+    }
 
+    public static void greenScreen(String pathToForeground, String pathToBackground, Pixel replacePixel, int threshold){
+        APImage foreground = new APImage(pathToForeground);
+        APImage background = new APImage(pathToBackground);
+
+        // Error logic: Checks foreground smaller or equal to background size
+        if (foreground.getWidth() > background.getWidth() || foreground.getHeight() > background.getHeight()) {
+            throw new IllegalArgumentException("Background H/W MUST be larger than corresponding foreground H/W.");
+        }
+
+        // Separates the pixel to be replaced into the RGB components, so it is easier accessed later
+        int replaceRed = replacePixel.getRed();
+        int replaceGreen = replacePixel.getGreen();
+        int replaceBlue = replacePixel.getBlue();
+
+        // For loop iterating through each pixel
+        for(int y = 0; y < foreground.getHeight(); y++){
+            for(int x = 0; x < foreground.getWidth(); x++){
+
+                // Takes pixel from foreground
+                Pixel p = foreground.getPixel(x, y);
+
+                // Tests if each pixel matches the color-to-replace pixel within a threshold
+                if (Math.abs(p.getRed() - replaceRed) < threshold &&
+                        Math.abs(p.getGreen() - replaceGreen) < threshold &&
+                        Math.abs(p.getBlue() - replaceBlue) < threshold) {
+
+                    // Sets foreground pixel to background if above condition is true
+                    Pixel bgPixel = background.getPixel(x, y);
+                    foreground.setPixel(x, y, bgPixel);
+                }
+            }
+        }
+        foreground.draw();
     }
 
 }
