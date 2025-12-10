@@ -12,9 +12,8 @@ public class ImageManipulation {
      *  Write a statement that will display the image in a window
      */
     public static void main(String[] args) {
-
-
-
+        APImage image = new APImage("/Users/olivers2028/IdeaProjects/Year-11-CS-Unit-9-2D-Arrays-Lab-Image-Manipulation/cyberpunk2077.jpg");
+        image.draw();
     }
 
     /** CHALLENGE ONE: Grayscale
@@ -131,7 +130,7 @@ public class ImageManipulation {
                         downEdge = true;
                     }
                 }
-                
+
                 if (leftEdge || downEdge) {
                     outPix.setRed(0);
                     outPix.setGreen(0);
